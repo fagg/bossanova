@@ -32,8 +32,8 @@ credentials_t * allocate_credentials() {
 		goto bypass;
 	}
 
-	creds->username_sz = creds->password_sz = 0;
-	creds->username = creds->password = NULL;
+	creds->username_sz = creds->password_sz = creds->domain_sz = 0;
+	creds->username = creds->password = creds->domain = NULL;
 
  bypass:
 	return creds;
@@ -50,10 +50,10 @@ void nuke_credentials(credentials_t *creds) {
 	 *
 	 * explicit_bzero is important. The operative word is "Explicit".
 	 * bzero will not guarantee the memory gets zeroed before freeing
-	 * due to compiler operations. AS SUCH IT IS LESS SECURE.
+	 * due to compiler optimization. AS SUCH IT IS LESS SECURE.
 	 *
 	 * Don't fuck with this during a port. If your OS doesn't support
-	 * explicit_bzero, here's a nickel go get get a real computer.
+	 * explicit_bzero, here's a nickel go get a real computer.
 	 */
 
 	explicit_bzero(creds->password, creds->password_sz);
@@ -70,7 +70,8 @@ int credentials_populated(credentials_t *creds) {
 		return CREDENTIALS_NOT_POPULATED;
 	}
 	else if (creds->password == NULL || creds->username == NULL
-	    || creds->password_sz == 0 || creds->username_sz == 0) {
+		 || creds->domain == NULL || creds->domain_sz == 0
+		 || creds->password_sz == 0 || creds->username_sz == 0) {
 		return CREDENTIALS_NOT_POPULATED;
 	}
 	return CREDENTIALS_POPULATED;
@@ -89,24 +90,26 @@ int extract_credentials_from_file(credentials_t *creds, FILE *fp) {
 	 *
 	 * username
 	 * password
+         * domain
 	 *
-	 * with nothing else in the file. */
+	 * with nothing else in the file.
+	 *
+	 * To start, we allocate some temporary buffers: */
 
-	char *uname_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
+	char *un_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
 	char *pw_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
+	char *dm_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
 
 	/* We're expecting username first, so read the file until
 	 * the we hit the first newline. */
 
 	int c;
-
-	/* Next, we're expecting the password. */
 	while ((c = fgetc(fp))
 	        && c != EOF
 	        && creds->username_sz < CREDENTIALS_BUFFER_SIZE) {
 		if (c == '\n')
 			break;
-		uname_buffer[(*creds).username_sz++] = (char) c;
+		un_buffer[(*creds).username_sz++] = (char) c;
 	}
 
 	/* Next, we're expecting the password. */
@@ -118,7 +121,16 @@ int extract_credentials_from_file(credentials_t *creds, FILE *fp) {
 		pw_buffer[(*creds).password_sz++] = (char) c;
 	}
 
-	if (creds->password_sz == 0 || creds->username_sz == 0) {
+	/* Next, we're expecting the domain/workgroup */
+	while ((c = fgetc(fp))
+	       && c != EOF
+	       && creds->domain_sz < CREDENTIALS_BUFFER_SIZE) {
+		if (c == '\n')
+			break;
+		dm_buffer[(*creds).domain_sz++] = (char) c;
+	}
+
+	if (creds->password_sz == 0 || creds->username_sz == 0 || creds->domain_sz == 0) {
 		/* Shit hit the fan, give up */
 		rc = CREDENTIALS_FILE_PARSE_ERROR;
 		goto deallocate_temp_buffers;
@@ -126,23 +138,29 @@ int extract_credentials_from_file(credentials_t *creds, FILE *fp) {
 
 	creds->password = (char *) calloc(creds->password_sz, sizeof(char));
 	creds->username = (char *) calloc(creds->username_sz, sizeof(char));
+	creds->domain   = (char *) calloc(creds->domain_sz, sizeof(char));
 
 	/* calloc went to shit */
-	if (creds->password == NULL || creds->username == NULL) {
+	if (creds->password == NULL ||
+	    creds->username == NULL ||
+	    creds->domain == NULL) {
 		rc = CREDENTIALS_FILE_PARSE_ERROR;
 		goto deallocate_temp_buffers;
 	}
 
 	(void) strncpy(creds->password, pw_buffer, creds->password_sz);
-	(void) strncpy(creds->username, uname_buffer, creds->username_sz);
+	(void) strncpy(creds->username, un_buffer, creds->username_sz);
+	(void) strncpy(creds->domain, dm_buffer, creds->domain_sz);
 
  deallocate_temp_buffers:
 	/* Finally, deallocate our buffers */
-	explicit_bzero(uname_buffer, CREDENTIALS_BUFFER_SIZE);
+	explicit_bzero(un_buffer, CREDENTIALS_BUFFER_SIZE);
 	explicit_bzero(pw_buffer, CREDENTIALS_BUFFER_SIZE);
+	explicit_bzero(dm_buffer, CREDENTIALS_BUFFER_SIZE);
 
-	free(uname_buffer);
+	free(un_buffer);
 	free(pw_buffer);
+	free(dm_buffer);
 
 	return rc;
 }

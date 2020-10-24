@@ -31,8 +31,12 @@
 typedef struct credentials_t {
 	char *username;
 	size_t username_sz;
+
 	char *password;
 	size_t password_sz;
+
+	char *domain;
+	size_t domain_sz;
 } credentials_t;
 
 credentials_t *allocate_credentials();
