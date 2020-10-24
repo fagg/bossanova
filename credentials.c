@@ -29,13 +29,12 @@ credentials_t * allocate_credentials() {
 
 	if (!creds) {
 		/* calloc went to shit for some reason */
-		goto bypass;
+		fprintf(stderr, "allocate_credentials(): calloc failed\n");
+		abort();
 	}
 
 	creds->username_sz = creds->password_sz = creds->domain_sz = 0;
 	creds->username = creds->password = creds->domain = NULL;
-
- bypass:
 	return creds;
 }
 
@@ -96,9 +95,17 @@ int extract_credentials_from_file(credentials_t *creds, FILE *fp) {
 	 *
 	 * To start, we allocate some temporary buffers: */
 
-	char *un_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
-	char *pw_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
-	char *dm_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
+	char *un_buffer = NULL, *pw_buffer = NULL, *dm_buffer = NULL;
+	un_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
+	pw_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
+	dm_buffer = (char *) calloc(CREDENTIALS_BUFFER_SIZE, sizeof(char));
+
+	if (un_buffer == NULL ||
+	    pw_buffer == NULL ||
+	    dm_buffer == NULL) {
+		fprintf(stderr, "extract_credentials_from_file(): calloc failed!\n");
+		abort();
+	}
 
 	/* We're expecting username first, so read the file until
 	 * the we hit the first newline. */
@@ -130,7 +137,9 @@ int extract_credentials_from_file(credentials_t *creds, FILE *fp) {
 		dm_buffer[(*creds).domain_sz++] = (char) c;
 	}
 
-	if (creds->password_sz == 0 || creds->username_sz == 0 || creds->domain_sz == 0) {
+	if (creds->password_sz == 0 ||
+	    creds->username_sz == 0 ||
+	    creds->domain_sz == 0) {
 		/* Shit hit the fan, give up */
 		rc = CREDENTIALS_FILE_PARSE_ERROR;
 		goto deallocate_temp_buffers;
@@ -144,8 +153,8 @@ int extract_credentials_from_file(credentials_t *creds, FILE *fp) {
 	if (creds->password == NULL ||
 	    creds->username == NULL ||
 	    creds->domain == NULL) {
-		rc = CREDENTIALS_FILE_PARSE_ERROR;
-		goto deallocate_temp_buffers;
+		fprintf(stderr, "extract_credentials_from_file(): calloc failed!\n");
+		abort();
 	}
 
 	(void) strncpy(creds->password, pw_buffer, creds->password_sz);
