@@ -1,5 +1,5 @@
 /* 
- * This file is part of the bossanova.
+ * This file is part of bossanova.
  * Copyright (c) 2020 Dr Ashton Fagg <ashton@fagg.id.au>
  * 
  * This program is free software: you can redistribute it and/or modify  

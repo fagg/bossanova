@@ -1,5 +1,5 @@
 # *
-# * This file is part of the bossanova.
+# * This file is part of bossanova.
 # * Copyright (c) 2020 Dr Ashton Fagg <ashton@fagg.id.au>
 # * 
 # * This program is free software: you can redistribute it and/or modify  
@@ -30,9 +30,9 @@ CC = cc
 
 PROG=bossanova
 
-SRCS = main.c version.c credentials.c
+SRCS = main.c version.c credentials.c utils.c credentials_file.c
 
-OBJS = main.o version.o credentials.o
+OBJS = main.o version.o credentials.o utils.o credentials_file.o
 
 ${PROG}: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} -o ${PROG}
@@ -43,6 +43,6 @@ ${PROG}: ${OBJS}
 
 clean:
 	rm -rf *.o
-	rm -rf ./bossanova
+	rm -rf ./${PROG}
 
 .PHONY: all clean

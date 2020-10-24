@@ -19,16 +19,20 @@
  * All other files in this project are subject to their own licensing terms.
  */
 
-
-#include <stdio.h>
-
-#include "credentials.h"
 #include "credentials_file.h"
 #include "debug.h"
-#include "version.h"
-
 #include "utils.h"
 
-int main() {
-	return 0;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int attempt_to_find_config_file(char *filename) {
+	const char *home = get_home_directory();
+	size_t length = strlen(home) + strlen("/.bossanova_credentials") + 1;
+
+	filename = (char *) calloc(length, sizeof(char));
+	(void) snprintf(filename, length, "%s/.bossanova_credentials", home);
+
+	return check_file_exists(filename);
 }

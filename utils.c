@@ -19,16 +19,21 @@
  * All other files in this project are subject to their own licensing terms.
  */
 
-
-#include <stdio.h>
-
-#include "credentials.h"
-#include "credentials_file.h"
-#include "debug.h"
-#include "version.h"
-
 #include "utils.h"
 
-int main() {
-	return 0;
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <pwd.h>
+
+const char *get_home_directory() {
+	const char *home_dir = getpwuid(getuid())->pw_dir;
+	return home_dir;
+}
+
+int check_file_exists(const char *filename) {
+	struct stat buffer;
+	return stat(filename, &buffer) == 0;
 }

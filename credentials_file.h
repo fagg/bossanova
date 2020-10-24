@@ -19,16 +19,7 @@
  * All other files in this project are subject to their own licensing terms.
  */
 
+#pragma once
 
-#include <stdio.h>
-
-#include "credentials.h"
-#include "credentials_file.h"
-#include "debug.h"
-#include "version.h"
-
-#include "utils.h"
-
-int main() {
-	return 0;
-}
+/* Functions for hunting around and reading the config file */
+int attempt_to_find_config_file(char *);

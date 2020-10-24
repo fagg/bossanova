@@ -19,16 +19,10 @@
  * All other files in this project are subject to their own licensing terms.
  */
 
+#pragma once
 
-#include <stdio.h>
+/* Check if files exists and we can read it. */
+int check_file_exists(const char *);
 
-#include "credentials.h"
-#include "credentials_file.h"
-#include "debug.h"
-#include "version.h"
-
-#include "utils.h"
-
-int main() {
-	return 0;
-}
+/* Returns the user's home directory */
+const char *get_home_directory();
