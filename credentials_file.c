@@ -32,6 +32,11 @@ int attempt_to_find_config_file(char *filename) {
 	size_t length = strlen(home) + strlen("/.bossanova_credentials") + 1;
 
 	filename = (char *) calloc(length, sizeof(char));
+	if (!filename) {
+		fprintf(stderr, "attempt_to_find_config_file(): calloc failed\n");
+		abort();
+	}
+	
 	(void) snprintf(filename, length, "%s/.bossanova_credentials", home);
 
 	return check_file_exists(filename);
